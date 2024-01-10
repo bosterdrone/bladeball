@@ -1,0 +1,113 @@
+getgenv().AutoDetectSpam = true
+
+--///////////////////////////////////////////////////////////////////--
+
+local Alive = workspace:WaitForChild("Alive", 9e9)
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remotes = ReplicatedStorage:WaitForChild("Remotes", 9e9)
+local ParryAttempt = Remotes:WaitForChild("ParryAttempt", 9e9)
+local Balls = workspace:WaitForChild("Balls", 9e9)
+
+--///////////////////////////////////////////////////////////////////--
+
+local function get_ProxyPlayer()
+  local Distance = math.huge
+  local plrRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+  local PlayerReturn = nil
+  
+  for _,plr1 in pairs(Alive:GetChildren()) do
+    if plr1:FindFirstChild("Humanoid") and plr1.Humanoid.Health > 50 then
+      if plr1.Name ~= Player.Name and plrRP and plr1:FindFirstChild("HumanoidRootPart") then
+        local magnitude = (plr1.HumanoidRootPart.Position - plrRP.Position).Magnitude
+        if magnitude <= Distance then
+          Distance = magnitude
+          PlayerReturn = plr1
+        end
+      end
+    end
+  end
+  return PlayerReturn
+end
+
+local function SuperClick()
+  task.spawn(function()
+    if IsAlive() and #Alive:GetChildren() > 1 then
+      local args1 = 0.5
+      local args2 = CFrame.new()
+      local args3 = {["enzo"] = Vector3.new()}
+      local args4 = {500, 500}
+      
+      if args1 and args2 and args3 and args4 then
+        ParryAttempt:FireServer(args1, args2, args3, args4)
+      end
+    end
+  end)
+end
+
+task.spawn(function()
+  while task.wait() do
+    if getgenv().SpamClickA and getgenv().AutoDetectSpam then
+      SuperClick()
+    end
+  end
+end)
+
+local ParryCounter = 0
+local DetectSpamDistance = 0
+
+local function GetBall(ball)
+  local Target = ""
+  
+  ball:GetPropertyChangedSignal("Position"):Connect(function()
+    local PlayerPP = Player and Player.Character and Player.Character.PrimaryPart
+    local NearestPlayer = get_ProxyPlayer()
+    
+    if ball and PlayerPP and NearestPlayer and NearestPlayer.PrimaryPart then
+      local PlayerDistance = (PlayerPP.Position - NearestPlayer.PrimaryPart.Position).Magnitude
+      local BallDistance = (PlayerPP.Position - ball.Position).Magnitude
+      
+      DetectSpamDistance = 25 + math.clamp(ParryCounter / 3, 0, 25)
+      
+      if ParryCounter > 2 and PlayerDistance < DetectSpamDistance and BallDistance < 55 then
+        getgenv().SpamClickA = true
+      else
+        getgenv().SpamClickA = false
+      end
+    end
+  end)
+  ball:GetAttributeChangedSignal("target"):Connect(function()
+    Target = ball:GetAttribute("target")
+    local NearestPlayer = get_ProxyPlayer()
+    
+    if NearestPlayer then
+      if Target == NearestPlayer.Name or Target == Player.Name then
+        ParryCounter = ParryCounter + 1
+      else
+        ParryCounter = 0
+      end
+    end
+  end)
+end
+
+for _,ball in pairs(Balls:GetChildren()) do
+  if ball and not ball:GetAttribute("realBall") then
+    return
+  end
+  
+  GetBall(ball)
+end
+
+Balls.ChildAdded:Connect(function(ball)
+  if not getgenv().AutoDetectSpam then
+    return
+  elseif ball and not ball:GetAttribute("realBall") then
+    return
+  end
+  
+  getgenv().SpamClickA = false
+  ParryCounter = 0
+  GetBall(ball)
+end)
