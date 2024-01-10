@@ -1,18 +1,5 @@
 getgenv().AutoDetectSpam = true
 
---///////////////////////////////////////////////////////////////////--
-
-local Alive = workspace:WaitForChild("Alive", 9e9)
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Remotes = ReplicatedStorage:WaitForChild("Remotes", 9e9)
-local ParryAttempt = Remotes:WaitForChild("ParryAttempt", 9e9)
-local Balls = workspace:WaitForChild("Balls", 9e9)
-
---///////////////////////////////////////////////////////////////////--
-
 local function get_ProxyPlayer()
   local Distance = math.huge
   local plrRP = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
